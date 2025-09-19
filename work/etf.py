@@ -1,80 +1,203 @@
+# etf_analyser_alternative.py
+import os
+import time
 import yfinance as yf
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-# Define tickers
-tickers = ["SPY", "QQQ", "IWM", "EFA", "EEM"]
+sns.set(style="whitegrid")
 
-# Download data
-raw_data = yf.download(tickers, start="2020-01-01", end="2025-01-01")
+def download_adj_close_per_ticker(tickers, start, end, cache_dir="data", force=False, pause=0.2):
+    """
+    Download each ticker individually and return a DataFrame of adjusted-close prices.
+    Caches per-ticker CSV files in `cache_dir` to avoid repeated downloads.
+    """
+    os.makedirs(cache_dir, exist_ok=True)
+    series_list = []
 
-# Handle multi-index DataFrame (yfinance output)
-if isinstance(raw_data.columns, pd.MultiIndex):
-    data = raw_data["Adj Close"]
-else:
-    data = raw_data[["Adj Close"]]
+    for t in tickers:
+        csv_path = os.path.join(cache_dir, f"{t}.csv")
+        df = None
 
-# Calculate daily returns
-returns = data.pct_change().dropna()
+        # try cache
+        if os.path.exists(csv_path) and not force:
+            try:
+                df = pd.read_csv(csv_path, index_col=0, parse_dates=True)
+                print(f"[cache] loaded {t} ({len(df)} rows)")
+            except Exception as e:
+                print(f"[cache] failed to load {csv_path}: {e}")
+                df = None
 
-# ---- Performance Metrics ----
-risk_free_rate = 0.02 / 252  # 2% annual risk-free, daily equivalent
+        # download if no cache or forced
+        if df is None:
+            print(f"[download] {t} ...")
+            try:
+                ticker_obj = yf.Ticker(t)
+                df = ticker_obj.history(start=start, end=end, actions=False)  # actions=False to skip dividends/splits columns
+            except Exception as e:
+                print(f"  error using Ticker.history for {t}: {e}")
+                df = None
 
-metrics = pd.DataFrame(index=tickers)
+            # fallback to yf.download single-ticker
+            if (df is None) or df.empty:
+                try:
+                    df2 = yf.download(t, start=start, end=end, progress=False)
+                    if isinstance(df2.columns, pd.MultiIndex):
+                        # attempt to extract 'Adj Close' level
+                        if 'Adj Close' in df2.columns.levels[0]:
+                            df = df2['Adj Close'].to_frame() if isinstance(df2['Adj Close'], pd.Series) else df2['Adj Close']
+                        else:
+                            df = df2
+                    else:
+                        df = df2
+                except Exception as e:
+                    print(f"  fallback download failed for {t}: {e}")
+                    df = None
 
-# Annualized return
-metrics["Annualized Return"] = (1 + returns.mean()) ** 252 - 1
+            # if still empty, warn and skip
+            if df is None or df.empty:
+                print(f"  WARNING: no data for {t} (skipping).")
+                continue
 
-# Annualized volatility
-metrics["Volatility"] = returns.std() * np.sqrt(252)
+            # save cache
+            try:
+                df.to_csv(csv_path)
+            except Exception as e:
+                print(f"  could not cache {t}: {e}")
 
-# Sharpe ratio
-metrics["Sharpe Ratio"] = (metrics["Annualized Return"] - 0.02) / metrics["Volatility"]
+            time.sleep(pause)
 
-# Max drawdown
-def max_drawdown(series):
-    cum_returns = (1 + series).cumprod()
-    rolling_max = cum_returns.cummax()
-    drawdown = (cum_returns - rolling_max) / rolling_max
-    return drawdown.min()
+        # pick the adjusted-close or close column robustly
+        chosen_series = None
+        if isinstance(df, pd.DataFrame):
+            if 'Adj Close' in df.columns:
+                chosen_series = df['Adj Close'].rename(t)
+            elif 'Adj_Close' in df.columns:
+                chosen_series = df['Adj_Close'].rename(t)
+            elif 'Close' in df.columns:
+                chosen_series = df['Close'].rename(t)
+            else:
+                # sometimes df has multiindex after previous code — try to flatten/access
+                cols = list(df.columns)
+                print(f"  columns for {t}: {cols}")
+                # try to find a 'Close' like name in nested MultiIndex
+                if isinstance(df.columns, pd.MultiIndex):
+                    # try extract level with 'Close' or 'Adj Close'
+                    for level0 in df.columns.levels[0]:
+                        if level0 in ('Adj Close', 'Close', 'Adj_Close'):
+                            chosen_series = df[level0].iloc[:, 0].rename(t)
+                            break
 
-metrics["Max Drawdown"] = returns.apply(max_drawdown)
+        elif isinstance(df, pd.Series):
+            chosen_series = df.rename(t)
 
-print("\nPerformance Metrics:\n")
-print(metrics)
+        if chosen_series is None:
+            print(f"  Could not locate a close column for {t}; skipping.")
+            continue
 
-# ---- Plots ----
+        series_list.append(chosen_series)
 
-# Price history
-plt.figure(figsize=(12, 6))
-for ticker in data.columns:
-    plt.plot(data.index, data[ticker], label=ticker)
-plt.legend()
-plt.title("ETF Adjusted Close Prices")
-plt.xlabel("Date")
-plt.ylabel("Price (USD)")
-plt.show()
+    if not series_list:
+        raise RuntimeError("No data downloaded. Check connectivity or ticker symbols.")
 
-# Cumulative returns
-cumulative_returns = (1 + returns).cumprod()
-plt.figure(figsize=(12, 6))
-for ticker in cumulative_returns.columns:
-    plt.plot(cumulative_returns.index, cumulative_returns[ticker], label=ticker)
-plt.legend()
-plt.title("ETF Cumulative Returns")
-plt.xlabel("Date")
-plt.ylabel("Growth of $1")
-plt.show()
+    # concat on index (date), aligning missing dates
+    price_df = pd.concat(series_list, axis=1).sort_index()
+    price_df.index = pd.to_datetime(price_df.index)
+    return price_df
 
-# Rolling volatility (risk over time)
-rolling_vol = returns.rolling(window=60).std() * np.sqrt(252)
-plt.figure(figsize=(12, 6))
-for ticker in rolling_vol.columns:
-    plt.plot(rolling_vol.index, rolling_vol[ticker], label=ticker)
-plt.legend()
-plt.title("60-Day Rolling Volatility")
-plt.xlabel("Date")
-plt.ylabel("Volatility")
-plt.show()
 
+# ----- metric helpers -----
+def compute_returns_and_metrics(price_df, risk_free_annual=0.02):
+    returns = price_df.pct_change().dropna()
+    ann_ret = (1 + returns.mean()) ** 252 - 1
+    ann_vol = returns.std() * np.sqrt(252)
+    sharpe = (ann_ret - risk_free_annual) / ann_vol
+
+    # max drawdown computed on price series (per asset)
+    def max_drawdown_from_price(series):
+        # handle NaNs
+        s = series.dropna()
+        if s.empty:
+            return np.nan
+        cum = s / s.iloc[0]
+        roll_max = s.cummax()
+        drawdown = s / roll_max - 1
+        return drawdown.min()
+
+    max_dd = {col: max_drawdown_from_price(price_df[col]) for col in price_df.columns}
+
+    metrics = pd.DataFrame({
+        "Annualized Return": ann_ret,
+        "Annualized Volatility": ann_vol,
+        "Sharpe": sharpe,
+        "Max Drawdown": pd.Series(max_dd)
+    })
+
+    return returns, metrics
+
+def portfolio_stats(weights, returns, risk_free_annual=0.02):
+    w = np.array(weights)
+    port_ret = np.sum(returns.mean() * w) * 252
+    port_vol = np.sqrt(np.dot(w.T, np.dot(returns.cov() * 252, w)))
+    sharpe = (port_ret - risk_free_annual) / port_vol
+    return port_ret, port_vol, sharpe
+
+def monte_carlo_simulation(returns, n_sim=3000):
+    n_assets = returns.shape[1]
+    results = np.zeros((n_sim, 3))
+    for i in range(n_sim):
+        w = np.random.random(n_assets)
+        w /= w.sum()
+        r, v, s = portfolio_stats(w, returns)
+        results[i] = [r, v, s]
+    return pd.DataFrame(results, columns=["Return", "Volatility", "Sharpe"])
+
+
+# ----- main run -----
+if __name__ == "__main__":
+    # user-editable
+    tickers = ["SPY", "QQQ", "VTI", "AGG", "EFA"]
+    start = "2025-01-01"
+    end = None
+
+    print("Downloading prices (per-ticker, with caching)...")
+    prices = download_adj_close_per_ticker(tickers, start, end=None, cache_dir="data", force=True)
+    print("\nPrice head:\n", prices.head())
+
+    returns, metrics = compute_returns_and_metrics(prices)
+    print("\nPerformance metrics:\n", metrics.round(4))
+
+    # save outputs for Power BI
+    prices.to_csv("prices.csv")
+    returns.to_csv("returns.csv")
+    metrics.to_csv("metrics.csv")
+    print("\nSaved prices.csv, returns.csv, metrics.csv")
+
+    # correlation heatmap
+    corr = returns.corr()
+    plt.figure(figsize=(8,6))
+    sns.heatmap(corr, annot=True, cmap="vlag")
+    plt.title("Returns Correlation")
+    plt.tight_layout()
+    plt.show()
+
+    # rolling volatility
+    rolling_vol = returns.rolling(window=60).std() * np.sqrt(252)
+    plt.figure(figsize=(10,5))
+    for col in rolling_vol.columns:
+        plt.plot(rolling_vol.index, rolling_vol[col], label=col)
+    plt.legend()
+    plt.title("60-day Rolling Volatility")
+    plt.show()
+
+    # monte carlo + efficient frontier scatter
+    mc = monte_carlo_simulation(returns, n_sim=3000)
+    plt.figure(figsize=(10,6))
+    sc = plt.scatter(mc["Volatility"], mc["Return"], c=mc["Sharpe"], cmap="viridis", alpha=0.7)
+    plt.xlabel("Volatility")
+    plt.ylabel("Expected Return")
+    plt.title("Random Portfolios (color = Sharpe)")
+    plt.colorbar(sc, label="Sharpe")
+    plt.show()
