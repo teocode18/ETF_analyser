@@ -88,7 +88,8 @@ SPY: This ticker shows the most significant price appreciation. Its price experi
 ---
 
 ## Analysis of Key Performance Metrics
-<img width="500" height="440" alt="image" src="https://github.com/user-attachments/assets/4c4f0df4-4753-46ed-9110-c546d961657f" />
+<img width="500" height="440" alt="image" src="https://github.com/user-attachments/assets/0b28ba27-d93a-41c1-9528-d79c8f964c20" />
+
 
 
 **Max Drawdown (Blue):**
