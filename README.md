@@ -75,9 +75,13 @@ The dashboard includes:
 
 ---
 
-Individual Analysis
+## Individual Analysis
+
 AGG: This ticker shows a stable, low-volatility trend. Its price stayed in a tight range and experienced a slow, gradual increase. This type of performance is often characteristic of bond ETFs or other low-risk assets.
 
 EFA: This ticker demonstrates strong and consistent growth. Its price trend is clearly upward, with a noticeable gain from the beginning of the period to the end. It shows moderate volatility, but the overall direction is consistently positive.
 
 SPY: This ticker shows the most significant price appreciation. Its price experienced explosive growth, climbing hundreds of points over the period. It also appears to have the highest volatility, with sharp fluctuations accompanying its strong upward trend.
+
+<img width="931" height="319" alt="image" src="https://github.com/user-attachments/assets/ced234f8-3d30-4aea-bdde-78cca35e6f2e" />
+
