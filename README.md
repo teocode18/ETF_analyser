@@ -58,7 +58,16 @@ ETFs analysed: **SPY, QQQ, VTI, AGG, EFA**
 - Transformed with Power Query:  
   - Unpivoted ETF columns → clean format (`Date, Ticker, Value`)  
   - Created a Date Table for time intelligence  
-  - Established relationships between Prices, Returns, and Metrics 
+  - Established relationships between Prices, Returns, and Metrics
+ 
+---
+
+###  Step 3: Dashboard Creation (Power BI)  
+The dashboard includes:  
+- **ETF Price Trends** → line chart by ticker  
+- **Daily Returns** → line chart by ticker 
+- **Performance Metrics** → table of Sharpe, volatility, returns, drawdowns  
+- **Filters** → date range slicer 
 
 
 
