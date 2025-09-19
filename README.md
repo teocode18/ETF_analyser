@@ -36,5 +36,31 @@ ETFs analysed: **SPY, QQQ, VTI, AGG, EFA**
 
 ---
 
+## Workflow  
+
+###  Step 1: Data Extraction & Processing (Python)  
+- Script: `etf.py`  
+- Downloads adjusted close prices using [yfinance](https://github.com/ranaroussi/yfinance)  
+- Calculates:  
+  - Daily returns  
+  - Annualised return & volatility  
+  - Sharpe ratio  
+  - Max drawdown  
+- Exports results to:  
+  - `prices.csv` → historical ETF prices  
+  - `returns.csv` → daily returns  
+  - `metrics.csv` → performance metrics  
+
+---
+
+###  Step 2: Data Modelling (Power BI)  
+- Imported CSV files into Power BI  
+- Transformed with Power Query:  
+  - Unpivoted ETF columns → clean format (`Date, Ticker, Value`)  
+  - Created a Date Table for time intelligence  
+  - Established relationships between Prices, Returns, and Metrics 
+
+
+
 
 ---
