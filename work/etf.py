@@ -6,14 +6,12 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+import datetime
+ 
 sns.set(style="whitegrid")
 
 def download_adj_close_per_ticker(tickers, start, end, cache_dir="data", force=False, pause=0.2):
-    """
-    Download each ticker individually and return a DataFrame of adjusted-close prices.
-    Caches per-ticker CSV files in `cache_dir` to avoid repeated downloads.
-    """
+
     os.makedirs(cache_dir, exist_ok=True)
     series_list = []
 
@@ -25,7 +23,14 @@ def download_adj_close_per_ticker(tickers, start, end, cache_dir="data", force=F
         if os.path.exists(csv_path) and not force:
             try:
                 df = pd.read_csv(csv_path, index_col=0, parse_dates=True)
-                print(f"[cache] loaded {t} ({len(df)} rows)")
+                last_date = df.index.max()
+                # if cache is outdated, fetch only new rows
+                if pd.to_datetime(last_date) < pd.to_datetime(end):
+                    print(f"[update] fetching new data for {t} from {last_date + pd.Timedelta(days=1)} to {end}")
+                    df_new = yf.download(t, start=last_date + pd.Timedelta(days=1), end=end, progress=False)
+                    if not df_new.empty:
+                        df = pd.concat([df, df_new])
+                        df.to_csv(csv_path)
             except Exception as e:
                 print(f"[cache] failed to load {csv_path}: {e}")
                 df = None
@@ -35,7 +40,7 @@ def download_adj_close_per_ticker(tickers, start, end, cache_dir="data", force=F
             print(f"[download] {t} ...")
             try:
                 ticker_obj = yf.Ticker(t)
-                df = ticker_obj.history(start=start, end=end, actions=False)  # actions=False to skip dividends/splits columns
+                df = ticker_obj.history(start=start, end=end, actions=False)
             except Exception as e:
                 print(f"  error using Ticker.history for {t}: {e}")
                 df = None
@@ -45,7 +50,6 @@ def download_adj_close_per_ticker(tickers, start, end, cache_dir="data", force=F
                 try:
                     df2 = yf.download(t, start=start, end=end, progress=False)
                     if isinstance(df2.columns, pd.MultiIndex):
-                        # attempt to extract 'Adj Close' level
                         if 'Adj Close' in df2.columns.levels[0]:
                             df = df2['Adj Close'].to_frame() if isinstance(df2['Adj Close'], pd.Series) else df2['Adj Close']
                         else:
@@ -56,12 +60,10 @@ def download_adj_close_per_ticker(tickers, start, end, cache_dir="data", force=F
                     print(f"  fallback download failed for {t}: {e}")
                     df = None
 
-            # if still empty, warn and skip
             if df is None or df.empty:
                 print(f"  WARNING: no data for {t} (skipping).")
                 continue
 
-            # save cache
             try:
                 df.to_csv(csv_path)
             except Exception as e:
@@ -69,7 +71,7 @@ def download_adj_close_per_ticker(tickers, start, end, cache_dir="data", force=F
 
             time.sleep(pause)
 
-        # pick the adjusted-close or close column robustly
+        # pick adjusted close or close
         chosen_series = None
         if isinstance(df, pd.DataFrame):
             if 'Adj Close' in df.columns:
@@ -79,17 +81,13 @@ def download_adj_close_per_ticker(tickers, start, end, cache_dir="data", force=F
             elif 'Close' in df.columns:
                 chosen_series = df['Close'].rename(t)
             else:
-                # sometimes df has multiindex after previous code — try to flatten/access
                 cols = list(df.columns)
                 print(f"  columns for {t}: {cols}")
-                # try to find a 'Close' like name in nested MultiIndex
                 if isinstance(df.columns, pd.MultiIndex):
-                    # try extract level with 'Close' or 'Adj Close'
                     for level0 in df.columns.levels[0]:
                         if level0 in ('Adj Close', 'Close', 'Adj_Close'):
                             chosen_series = df[level0].iloc[:, 0].rename(t)
                             break
-
         elif isinstance(df, pd.Series):
             chosen_series = df.rename(t)
 
@@ -102,7 +100,6 @@ def download_adj_close_per_ticker(tickers, start, end, cache_dir="data", force=F
     if not series_list:
         raise RuntimeError("No data downloaded. Check connectivity or ticker symbols.")
 
-    # concat on index (date), aligning missing dates
     price_df = pd.concat(series_list, axis=1).sort_index()
     price_df.index = pd.to_datetime(price_df.index)
     return price_df
@@ -115,13 +112,10 @@ def compute_returns_and_metrics(price_df, risk_free_annual=0.02):
     ann_vol = returns.std() * np.sqrt(252)
     sharpe = (ann_ret - risk_free_annual) / ann_vol
 
-    # max drawdown computed on price series (per asset)
     def max_drawdown_from_price(series):
-        # handle NaNs
         s = series.dropna()
         if s.empty:
             return np.nan
-        cum = s / s.iloc[0]
         roll_max = s.cummax()
         drawdown = s / roll_max - 1
         return drawdown.min()
@@ -157,13 +151,12 @@ def monte_carlo_simulation(returns, n_sim=3000):
 
 # ----- main run -----
 if __name__ == "__main__":
-    # user-editable
     tickers = ["SPY", "QQQ", "VTI", "AGG", "EFA"]
-    start = "2025-01-01"
-    end = None
+    start = "2024-08-01"  # get 1 year back so Aug 2024 → today
+    end = datetime.datetime.today().strftime("%Y-%m-%d")
 
     print("Downloading prices (per-ticker, with caching)...")
-    prices = download_adj_close_per_ticker(tickers, start, end=None, cache_dir="data", force=True)
+    prices = download_adj_close_per_ticker(tickers, start, end=end, cache_dir="data", force=False)
     print("\nPrice head:\n", prices.head())
 
     returns, metrics = compute_returns_and_metrics(prices)
