@@ -75,7 +75,7 @@ The dashboard includes:
 
 ---
 
-## Individual Analysis
+## Individual Analysis of Sum of Price (sample)
 
 AGG: This ticker shows a stable, low-volatility trend. Its price stayed in a tight range and experienced a slow, gradual increase. This type of performance is often characteristic of bond ETFs or other low-risk assets.
 
@@ -84,4 +84,32 @@ EFA: This ticker demonstrates strong and consistent growth. Its price trend is c
 SPY: This ticker shows the most significant price appreciation. Its price experienced explosive growth, climbing hundreds of points over the period. It also appears to have the highest volatility, with sharp fluctuations accompanying its strong upward trend.
 
 <img width="931" height="319" alt="image" src="https://github.com/user-attachments/assets/ced234f8-3d30-4aea-bdde-78cca35e6f2e" />
+
+---
+
+## Analysis of Key Performance Metrics
+<img width="777" height="426" alt="image" src="https://github.com/user-attachments/assets/4c4f0df4-4753-46ed-9110-c546d961657f" />
+
+**Max Drawdown (Blue):**
+- AGG and VTI have the largest max drawdowns, which implies they have experienced significant declines at some point. This could be a sign of higher risk, especially in times of market turbulence.
+- QQQ has the smallest max drawdown, indicating a more stable performance during downturns, aligning with its higher risk-adjusted returns.
+
+**Annualised Return (Orange):**
+- QQQ shows the highest annualised return, consistent with the previous data we saw. This suggests it has delivered strong performance over time, though it may also be more volatile.
+- AGG and EFA have the lowest annualised returns, which suggests these are more conservative investments with lower growth potential but also reduced risk.
+
+**Sharpe Ratio (Purple):**
+- QQQ again stands out with the highest Sharpe ratio, reflecting that its returns are well-compensated for its risk.
+- AGG has the lowest Sharpe ratio, indicating that it may not offer as strong a return relative to its risk compared to other assets like QQQ.
+
+## Key Takeaways
+
+**Risk-Return Profile:**
+- QQQ is the best performing asset in terms of both returns and Sharpe ratio, making it the most attractive option for investors seeking higher returns with a reasonable amount of risk.
+- AGG, being more conservative, has lower returns and a larger max drawdown, suggesting that it might not be the best for growth-focused investors but could be suitable for those prioritizing stability.
+
+**Performance Balance:**
+- If you're looking for a balanced portfolio, you may consider combining assets like QQQ for growth and AGG for stability. However, EFA and VTI could also be attractive depending on the overall risk tolerance of the investor.
+
+
 
