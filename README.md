@@ -90,6 +90,7 @@ SPY: This ticker shows the most significant price appreciation. Its price experi
 ## Analysis of Key Performance Metrics
 <img width="777" height="426" alt="image" src="https://github.com/user-attachments/assets/4c4f0df4-4753-46ed-9110-c546d961657f" />
 
+
 **Max Drawdown (Blue):**
 - AGG and VTI have the largest max drawdowns, which implies they have experienced significant declines at some point. This could be a sign of higher risk, especially in times of market turbulence.
 - QQQ has the smallest max drawdown, indicating a more stable performance during downturns, aligning with its higher risk-adjusted returns.
