@@ -71,7 +71,8 @@ The dashboard includes:
 
 
 
-<img width="842" height="476" alt="image" src="https://github.com/user-attachments/assets/ba60928f-5154-4d59-85ef-2a71d4554422" />
+<img width="842" height="476" alt="image" src="https://github.com/user-attachments/assets/94ad789e-3aba-49c5-9f55-2eb729f66a4c" />
+
 
 ---
 
