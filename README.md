@@ -84,7 +84,8 @@ EFA: This ticker demonstrates strong and consistent growth. Its price trend is c
 
 SPY: This ticker shows the most significant price appreciation. Its price experienced explosive growth, climbing hundreds of points over the period. It also appears to have the highest volatility, with sharp fluctuations accompanying its strong upward trend.
 
-<img width="931" height="319" alt="image" src="https://github.com/user-attachments/assets/ced234f8-3d30-4aea-bdde-78cca35e6f2e" />
+<img width="931" height="319" alt="image" src="https://github.com/user-attachments/assets/7208aff4-cd9c-4071-852c-123de6d8a927" />
+
 
 ---
 
