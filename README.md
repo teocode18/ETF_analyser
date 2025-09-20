@@ -133,6 +133,34 @@ The values on the chart can be interpreted as percentage losses:
 
  The visual confirms a wide range of risk profiles within your selected assets, with QQQ being significantly more volatile and risky than the rest, while AGG is the most stable.
 
+---
+## Diversification Score Analysis
+<img width="351" height="299" alt="image" src="https://github.com/user-attachments/assets/10589a71-7f64-4a48-a051-8112cf7b6d97" />
 
+**Interpretation:**
+This score is a key indicator of how well the assets are working together to reduce risk. A higher score is better.
+- **Score of 1.00**: Assets are perfectly uncorrelated (maximum diversification benefit)
+- **Score of 0.00**: Assets are perfectly positively correlated (no diversification benefit)
+- **#Our score: 0.36** - Falls in the lower-to-moderate range
+
+This means that while there is some benefit from diversification (our assets don't all move in perfect lockstep), the portfolio as a whole is still highly correlated.
+
+---
+## Overall Conclusions
+
+**Portfolio Risk Characteristics:**
+- The portfolio demonstrates a concentration of risk in higher-volatility assets
+- Value at Risk (VaR) analysis reveals significant variation in risk profiles across holdings
+- Certain assets contribute disproportionately to overall portfolio risk
+
+**Diversification Effectiveness:**
+- The current asset combination provides limited diversification benefits
+- Correlation patterns indicate assets tend to move in similar directions during market movements
+- The moderate diversification score suggests potential for improved risk management through strategic asset selection
+
+**Risk-Return Profile:**
+- The portfolio exhibits a wide spectrum of risk levels across different holdings
+- Higher-risk assets coexist with more stable investments, creating a mixed risk profile
+- The overall composition reflects a balance between growth-oriented and conservative positions
 
 
