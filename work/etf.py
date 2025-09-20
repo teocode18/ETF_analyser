@@ -1,4 +1,3 @@
-# etf_analyser_alternative.py
 import os
 import time
 import yfinance as yf
@@ -7,11 +6,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import datetime
- 
+
 sns.set(style="whitegrid")
 
 def download_adj_close_per_ticker(tickers, start, end, cache_dir="data", force=False, pause=0.2):
-
     os.makedirs(cache_dir, exist_ok=True)
     series_list = []
 
@@ -104,7 +102,6 @@ def download_adj_close_per_ticker(tickers, start, end, cache_dir="data", force=F
     price_df.index = pd.to_datetime(price_df.index)
     return price_df
 
-
 # ----- metric helpers -----
 def compute_returns_and_metrics(price_df, risk_free_annual=0.02):
     returns = price_df.pct_change().dropna()
@@ -148,49 +145,82 @@ def monte_carlo_simulation(returns, n_sim=3000):
         results[i] = [r, v, s]
     return pd.DataFrame(results, columns=["Return", "Volatility", "Sharpe"])
 
+# ----- Value at Risk (VaR) helper -----
+def compute_var(returns, confidence_level=0.05):
+    """
+    Calculate the Value at Risk (VaR) for a given returns series at a specified confidence level.
+    :param returns: The returns series (DataFrame or Series)
+    :param confidence_level: The confidence level for VaR (default 0.05 for 95% confidence level)
+    :return: The VaR at the given confidence level
+    """
+    var = returns.quantile(confidence_level)  # VaR at the given confidence level
+    return var
+
+# ----- Correlation Matrix and Diversification Score -----
+def compute_correlation_matrix(returns):
+    """
+    Compute the correlation matrix for the ETF returns.
+    :param returns: The returns series (DataFrame)
+    :return: Correlation matrix
+    """
+    correlation_matrix = returns.corr()
+    return correlation_matrix
+
+def compute_diversification_score(correlation_matrix):
+    """
+    Compute the diversification score based on the average correlation.
+    :param correlation_matrix: The correlation matrix
+    :return: Diversification score
+    """
+    # Calculate the average correlation (excluding diagonal values)
+    avg_correlation = correlation_matrix[~np.eye(correlation_matrix.shape[0], dtype=bool)].mean().mean()
+    diversification_score = 1 - avg_correlation  # A higher score indicates better diversification
+    return diversification_score
 
 # ----- main run -----
 if __name__ == "__main__":
     tickers = ["SPY", "QQQ", "VTI", "AGG", "EFA"]
-    start = "2024-08-01"  # get 1 year back so Aug 2024 → today
+    start = "2024-08-01"  # Example start date
     end = datetime.datetime.today().strftime("%Y-%m-%d")
 
     print("Downloading prices (per-ticker, with caching)...")
     prices = download_adj_close_per_ticker(tickers, start, end=end, cache_dir="data", force=False)
     print("\nPrice head:\n", prices.head())
 
+    # Ensure the Date column has no time (just date)
+    prices.index = prices.index.date  # This will keep only the date portion
+    
+    # Compute returns and performance metrics
     returns, metrics = compute_returns_and_metrics(prices)
     print("\nPerformance metrics:\n", metrics.round(4))
 
-    # save outputs for Power BI
+    # Calculate Value at Risk (VaR) for each ETF at the 95% confidence level
+    var_95 = {ticker: compute_var(returns[ticker], 0.05) for ticker in returns.columns}
+    print("\nValue at Risk (VaR) at 95% confidence level:\n", var_95)
+
+    # Save outputs for Power BI with the date in the correct format
     prices.to_csv("prices.csv")
     returns.to_csv("returns.csv")
     metrics.to_csv("metrics.csv")
     print("\nSaved prices.csv, returns.csv, metrics.csv")
 
-    # correlation heatmap
-    corr = returns.corr()
-    plt.figure(figsize=(8,6))
-    sns.heatmap(corr, annot=True, cmap="vlag")
-    plt.title("Returns Correlation")
-    plt.tight_layout()
-    plt.show()
+    # Save VaR results to a CSV file
+    var_df = pd.DataFrame(list(var_95.items()), columns=["ETF", "VaR_95"])
+    var_df.to_csv("var_95.csv", index=False)
+    print("\nSaved var_95.csv")
 
-    # rolling volatility
-    rolling_vol = returns.rolling(window=60).std() * np.sqrt(252)
-    plt.figure(figsize=(10,5))
-    for col in rolling_vol.columns:
-        plt.plot(rolling_vol.index, rolling_vol[col], label=col)
-    plt.legend()
-    plt.title("60-day Rolling Volatility")
-    plt.show()
+    # Calculate the Correlation Matrix
+    correlation_matrix = compute_correlation_matrix(returns)
+    print("\nCorrelation Matrix:\n", correlation_matrix)
 
-    # monte carlo + efficient frontier scatter
-    mc = monte_carlo_simulation(returns, n_sim=3000)
-    plt.figure(figsize=(10,6))
-    sc = plt.scatter(mc["Volatility"], mc["Return"], c=mc["Sharpe"], cmap="viridis", alpha=0.7)
-    plt.xlabel("Volatility")
-    plt.ylabel("Expected Return")
-    plt.title("Random Portfolios (color = Sharpe)")
-    plt.colorbar(sc, label="Sharpe")
-    plt.show()
+    # Calculate the Diversification Score
+    diversification_score = compute_diversification_score(correlation_matrix)
+    print(f"\nDiversification Score: {diversification_score:.4f}")
+
+    # Save Diversification Score to CSV
+    diversification_df = pd.DataFrame({'Diversification Score': [diversification_score]})
+    diversification_df.to_csv("diversification_score.csv", index=False)
+    print("\nSaved diversification_score.csv")
+
+    # Displaying VaR results
+   
