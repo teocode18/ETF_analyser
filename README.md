@@ -117,5 +117,22 @@ SPY: This ticker shows the most significant price appreciation. Its price experi
 **Performance Balance:**
 - If you're looking for a balanced portfolio, you may consider combining assets like QQQ for growth and AGG for stability. However, EFA and VTI could also be attractive depending on the overall risk tolerance of the investor.
 
+---
+## Value at Risk (VaR) Analysis
+<img width="388" height="263" alt="image" src="https://github.com/user-attachments/assets/9c37cd04-177e-45dd-a46f-2cb599076945" />
+
+**Interpretation of VaR (95% Confidence):**
+This chart shows the Value at Risk (VaR), a financial metric that estimates the potential loss of an investment over a set period with a specific level of confidence. Your chart uses a 95% VaR, meaning that in 95 out of 100 cases, the portfolio is not expected to lose more than the value shown.
+
+The values on the chart can be interpreted as percentage losses:
+- **QQQ**: VaR of -0.025 (potential loss of 2.5% or more) - **Riskiest asset**
+- **VTI**: VaR of -0.017 (potential loss of 1.7% or more)
+- **SPY**: VaR of -0.014 (potential loss of 1.4% or more)
+- **EFA**: VaR of -0.005 (potential loss of 0.5% or more)
+- **AGG**: VaR of -0.002 (potential loss of 0.2% or more) - **Most stable asset**
+
+### The visual confirms a wide range of risk profiles within your selected assets, with QQQ being significantly more volatile and risky than the rest, while AGG is the most stable.
+
+
 
 
