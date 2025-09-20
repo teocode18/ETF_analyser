@@ -131,7 +131,7 @@ The values on the chart can be interpreted as percentage losses:
 - **EFA**: VaR of -0.005 (potential loss of 0.5% or more)
 - **AGG**: VaR of -0.002 (potential loss of 0.2% or more) - **Most stable asset**
 
-### The visual confirms a wide range of risk profiles within your selected assets, with QQQ being significantly more volatile and risky than the rest, while AGG is the most stable.
+ The visual confirms a wide range of risk profiles within your selected assets, with QQQ being significantly more volatile and risky than the rest, while AGG is the most stable.
 
 
 
